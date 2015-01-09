@@ -18,9 +18,11 @@ Answer:
 
 c) Select three challenges you listed in 1b) and detail on them. For each, focus on the following two questions: Why do these make developing Distributed Systems challenging? What mechanisms did we study in the course to deal with them? (3p)
 Answer:
+TODO
 
 d) The following statement is attributed to Thomas J. Watson, Chairman and CEO of international Business Machines (IBM), in 1943: "I think there is a world market for maybe five computers". Please state the key consequences for distributed systems if this sentence had been the correct vision. (2p)
 Answer: 
+TODO
 
 e) Centralized Systems (e.g. Client Server Systems) vs Decentralized Systes (e.g. Peer-To-Peer Systems): We discussed the differences between the centralized architectures and the decentralized architectures. Describe each system briefly and discuss two advantages of each. (2p)
 Answer:
@@ -102,10 +104,34 @@ Answer:
 	Because physical clocks drift apart and dont have the same tick rate.
 
 
+b) One algorithm for clock synchronization is called Berkely Algorithm. 
+Answer:
+	i. It operates in thee steps. Please describe these.
+		1. Ask nodes about their time.
+		2. Calculate the average time, t.
+		3. Sends the offset to all nodes to get time, t.
+
+	ii. How do the goals of this algorithm differ from other algorithms for clock synchronization such as Christian's Algorithm or the SNTP Algorithm?
+		The Berkley Algorithm says there is no correct time and therefore uses an average time in the group it is in. Christian's Algorithm tries to mask network latency when using time synchronization and SNTP tries to set a correct UTP time.
+
 b) from Exam 2014-04-25: Please answer the following questions about logical clocks. (2p)
 Answer:
 	i. How do logical clocks differ from physical clocks?
-
+		TODO
 	ii. Note two types of logical clocks.
-
+		TODO
 	iii. When do logical clocks "tick", i.e., when are they incremented?
+		TODO
+	iv. When a node sends a message to another node, what does it do with its logical clock?
+		TODO
+
+c) In the course, we discussed the concept of Vector Clocks. Please answer the following questions about Vector Clocks.
+Answer:
+	i. How many clocks does each node maintain?
+		One. One per node.
+
+	ii. Upon receiving a message, what does a node do with its vector clock(s)?
+		It increases its own clock with 1 and updates the other if they are higher.
+
+	iii. Below you find a figure of a vector clock for three nodes. All vector clocks are initialized to zero. Please list the vector clocks for each event.
+		TODO

@@ -1,0 +1,237 @@
+# Fredrik Ek, 901109-0959
+# Robert Stigsson, 910814-4719
+
+####################
+## Distributed Systems lab 4 - Blackboard based on the quorum protocol
+####################
+
+
+def board(ip, port, sockobj, thiscommhandle, listencommhandle):
+  msgheader = sockobj.recv(1024) # Receive message, 
+
+  # Here we handle the different "types" of requests which can occur in the application
+  # The first type is a basic GET-request which applies when someone loads the page
+  # In this lab it works in a way where it reads from half of all current active vessels,
+  # upon loading the page. 
+  if msgheader.startswith( 'GET' ):
+    
+    mycontext['commentread'].acquire()
+    updateComment()
+    mycontext['commentread'].release()
+
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    stopcomm(thiscommhandle)   
+    
+  # The second type of requests that can occur is the POST-request which happens when someone
+  # submits text through the textbox. In this lab it works in such a way that it first of
+  # locks (half of all current active nodes) + 1, then reads the entire board from these vessels, 
+  # update the most recent board with the actual comment and post the entire updated board to all
+  # locked vessels.
+  elif msgheader.startswith( 'POST' ):
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    print("Recieved POST: " + posted_comment + " at " + str(getruntime()))
+
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    
+    stopcomm(thiscommhandle)
+    
+    write(posted_comment)
+
+  # The third type of "request" or case is one that we made up specifically for these assignments
+  # We call it SERVERPOST and its job is to receieve messages from other vessels.
+  # In this lab the SERVERPOST takes a message in form of a whole board and then updates
+  # the own board with a copy.
+  elif msgheader.startswith( 'SERVERPOST' ):
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    print("Recieved SERVERPOST: " + posted_comment + " at " + str(getruntime()))
+    mycontext['comment'] = posted_comment.split(",")
+    stopcomm(thiscommhandle)
+  # In this lab we have a specific get-type for vessels. This only sends the whole board
+  # to the vessel requesting the board.
+  elif msgheader.startswith( 'SERVERGET' ):
+    sockobj.send(str(mycontext.get("comment"))[1:-1])
+    stopcomm(thiscommhandle)
+  # In this lab we also use remote locks. SERVERLOCK is a try_acquire lock, which retuns
+  # "Failed" if it didn't manage to lock the current vessel.
+  elif msgheader.startswith( 'SERVERLOCK' ):
+    if(mycontext['writelock'].acquire(False)):
+      mycontext['ipAdressLock'] = ip
+      sockobj.send("Working")
+      stopcomm(thiscommhandle)
+    else:
+      sockobj.send("Failed")
+      stopcomm(thiscommhandle)
+  # Since we use remote locks, we also need to be able to remote unlock.
+  elif msgheader.startswith( 'SERVERUNLOCK' ):
+    if(ip == mycontext['ipAdressLock']):
+      mycontext['writelock'].release()
+      stopcomm(thiscommhandle)
+
+  # This case should not occur
+  else:
+    print "Will never end up here"
+    
+# The actual "Write"-part of the Quorum based protocol.
+# Locks W/2 + 1 vessels.
+# Reads from W/2 vessels.
+# Sends the update to the locked vessels.
+# Unlocks the locked nodes.
+def write(comment):
+  for x in range(0, len(mycontext['allHosts'])/2 + 1):
+    if(mycontext['allHosts'][x] != mycontext['IP']):
+      lock(mycontext['allHosts'][x])
+    else:
+      mycontext['writelock'].acquire()
+
+  mycontext['commentread'].acquire()
+  
+  updateComment()
+
+  mycontext['comment'].append(comment)
+ 
+  mycontext['commentread'].release()
+
+  for x in range(0, len(mycontext['allHosts'])/2 + 1):
+    if(mycontext['allHosts'][x] != mycontext['IP']):
+      post(mycontext['allHosts'][x], mycontext['comment'])
+
+  for x in range(0, len(mycontext['allHosts'])/2 + 1):
+    if(mycontext['allHosts'][x] != mycontext['IP']):
+      unlock(mycontext['allHosts'][x])
+    else:
+      mycontext['writelock'].release()
+
+# Tries to lock a vessel until it either fails to handle the socket (usually happens when
+# a vessel has gone down) or succeeds with locking the vessel.
+def lock(ipadress):
+  TCP_PORT = mycontext['TCPPORT']
+  notLocked = True
+  try:
+    while(notLocked):
+      tempsocket = openconn(ipadress, TCP_PORT)
+      tempsocket.send("SERVERLOCK")
+      working = tempsocket.recv(512)
+      if(str(working) == "Working"):
+        notLocked = False
+      else:
+        print "Not locked yet"
+      tempsocket.close()
+  except Exception, e:
+    print str(e)
+
+# Unlocks a vessel.
+def unlock(ipadress):
+  TCP_PORT = mycontext['TCPPORT']
+  try:
+    tempsocket = openconn(ipadress, TCP_PORT)
+    tempsocket.send("SERVERUNLOCK")
+    tempsocket.close()
+  except Exception, e:
+    print str(e)
+
+# Sends a comment to a vessel.
+def post(ipadress, comments):
+  TCP_PORT = mycontext['TCPPORT']
+  try:
+    tempsocket = openconn(ipadress, TCP_PORT)
+    tempsocket.send("SERVERPOST comment=" + str(comments)[1:-1])
+    tempsocket.close()
+  except Exception, e:
+    print str(e)
+
+# Reads all the comments and swaps the blackboard to the most updated blackboard.
+def updateComment():
+  newestComment = read()
+  mycontext['comment'] = newestComment
+ 
+# Reads the blackboard from W/2 vessels and returns the most updated one.
+def read():
+  newestComments = mycontext['comment']
+  for x in range(0, len(mycontext['allHosts'])/2):
+    tempComments = helpReader(mycontext['allHosts'][x])
+    if(len(tempComments) > len(newestComments)):
+      newestComments = tempComments
+  return newestComments
+
+# A help function to the read-function. Gets a blackboard from a vessel.
+def helpReader(ipadress):
+  TCP_PORT = mycontext['TCPPORT']
+  comments = []
+  try:
+    tempsocket = openconn(ipadress, TCP_PORT)
+    tempsocket.send("SERVERGET")
+    comments = tempsocket.recv(1024)
+    comments = comments.split(",")
+    tempsocket.close()
+  except Exception, e:
+    print str(e)
+
+  return comments
+  
+def createPage():
+  # We split up the html page in two, so that we later on easily will be  
+  # able to input the submitted data on a specific position on the screen. 
+  htmlhead = """<!DOCTYPE html>
+              <html>
+              <head>
+              <meta content="text/html charset=utf-8" http-equiv="content-type">
+              <title>Blackboard GroupName</title>
+              </head>
+              <body>
+                <h2> Board Content</h2>"""
+  htmlfoot = """
+                <br>
+                <textarea rows="4" cols="50" name="comment" form="usrform"></textarea>
+                <form action="" id="usrform" method="post">
+                <input type="submit">
+                </form>
+              </body>
+              </html>"""
+  htmlresponse = htmlhead
+  comments = mycontext.get("comment")
+  # Prints the comments on their own lines between "htmlhead" and "htmlfoot"
+  if(comments):
+    for comment in comments:
+      htmlresponse += str(comment) + "<br>"
+    
+  return htmlresponse + htmlfoot    
+    
+	
+if callfunc == 'initialize':
+  mycontext['writelock'] = getlock()
+  mycontext['commentread'] = getlock()
+  mycontext['ipAdressLock'] = "0.0.0.0"
+  if len(callargs) > 1:
+    raise Exception("Too many call arguments")
+
+  # Running remotely (assuming that we pass input argument only remotely):
+  # whenever this vessel gets a connection on its IPaddress:Clearinghouseport it'll call function board
+  elif len(callargs) == 1:
+    port = int(callargs[0])
+    ip = getmyip()
+    mycontext['TCPPORT'] = port
+    mycontext['IP'] = ip
+    
+    ipconfig_file = open("ipconfig.txt", 'r')
+    allHosts = []
+    for row in ipconfig_file:
+      row = row.split()
+      allHosts.append(row[0])
+      
+    mycontext['comment'] = []
+    mycontext['allHosts'] = allHosts
+  # Running locally:
+  # whenever we get a connection on 127.0.0.1:12345 we'll call board
+  else:
+    port = 12345
+    ip = '127.0.0.1'
+  listencommhandle = waitforconn(ip,port,board)
+cf442FPD

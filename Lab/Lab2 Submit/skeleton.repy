@@ -1,0 +1,235 @@
+# Fredrik Ek, 9011090959
+# Robert Stigsson, 9108144719
+
+#############################################
+#### The way in how this program works is that a node starts 
+#### with choosing who its next neighbour is going to be, 
+#### depending on where in the ipconfig-list it's own IP is.
+#### If the neighbour node goes down for some reason, the algorithm 
+#### will stop seeing the node
+#### as a neighbour, and instead proceed further down the ipconfig-list.
+#### The leader will not care if a node goes down unless it is its neighbour, 
+#### in which case it will work as any other node.
+#### The leader will always try to send the message on to all other nodes, 
+#### even the "broken" ones. 
+#############################################
+
+def board(ip, port, sockobj, thiscommhandle, listencommhandle):
+  msgheader = sockobj.recv(1024) # Receive message, 
+  
+  # TCP_PORT is just an alias for mycontext['TCPPORT'] to 
+  # avoid multiple dictionary lookups later in the application
+  TCP_PORT = mycontext['TCPPORT']
+  
+  # Here we handle the different "types" of requests which can occur in the application
+  # The first type is a basic GET-request which applies when someone loads the page
+  if msgheader.startswith( 'GET' ):
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    stopcomm(thiscommhandle)   
+  
+  # The second type of requests that can occur is the POST-request which happens when someone
+  # submits text through the textbox. The difference compared to the first lab is that now the
+  # POST will be submitted to the leader, unless this node is the actual leader.
+  # If this is the leader, it will broadcast the message to all the other nodes (vessels).
+  
+  elif msgheader.startswith( 'POST' ):
+    
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    
+    leader = mycontext['leader']
+    
+    mycontext['postlock'].acquire()
+    
+    if(leader != getmyip()):
+      tempsocket = openconn(leader, TCP_PORT)
+      tempsocket.send("SERVERPOST comment=" + posted_comment)
+      tempsocket.close()
+    else:
+      addToComments(posted_comment)
+      sendMessage(posted_comment)
+      
+    mycontext['postlock'].release()
+    
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    stopcomm(thiscommhandle)
+    
+  # The third type of "request" or case is one that we made up specifically for these assignments
+  # We call it SERVERPOST and its only job is to forward posts to the leader or in the case
+  # when the actual node is the leader, send messages to all the other nodes.
+  # In the SERVERPOST, we save the message to our comments-list.
+  
+  elif msgheader.startswith( 'SERVERPOST' ):
+    
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    leader = mycontext['leader']
+    
+    mycontext['postlock'].acquire()
+    
+    addToComments(posted_comment)
+      
+    if(leader == getmyip()):
+      sendMessage(posted_comment)
+
+    mycontext['postlock'].release()
+    
+    stopcomm(thiscommhandle)
+  
+  # This case is for handling elections. An election is started during initialization and then sent on to 
+  # the neighbour node which then adds the information regarding what it knows about the current leader
+  # and keeps forwarding the information to its next neighbour.
+  
+  elif msgheader.startswith( 'ELECTION' ):
+    httpheader = msgheader.split("electionnumber=")
+    elecNumber = float(httpheader[1])
+    elecIP = mycontext['leader']
+    if(elecNumber >= mycontext['electionNumber']):
+      httpheader = httpheader[0].split('ipnumber=')
+      elecIP = httpheader[1]
+      mycontext['electionNumber'] = elecNumber
+      mycontext['leader'] = elecIP
+    else:
+      elecNumber = mycontext['electionNumber']
+    
+    allHosts = mycontext['allHosts']
+    neighboorLookup = mycontext['neighboorLookup']
+
+    if(mycontext['numberOfElec'] < len(allHosts)):
+      notFoundRunningSocket = True
+      while notFoundRunningSocket:
+        try:
+          print "Neighbour at: " + str(elecIP) + " " + str(TCP_PORT)
+          tempsocket = openconn(allHosts[neighboorLookup], TCP_PORT)
+          tempsocket.send("ELECTION ipnumber=" + str(elecIP) + "electionnumber=" + str(elecNumber))
+          tempsocket.close()
+          notFoundRunningSocket = False
+        except Exception, e:
+          neighboorLookup = (neighboorLookup + 1) % len(allHosts)
+          print str(e)
+      mycontext['neighboorLookup'] = neighboorLookup
+      mycontext['numberOfElec'] = mycontext['numberOfElec'] + 1
+    stopcomm(thiscommhandle)
+    
+  # This case should not occur  
+  else:
+    print "Will never end up here"
+    
+## A function which runs on each startup that starts an election to decide which node should be the leader. 
+def startup():
+  neighboorLookup = mycontext['neighboorLookup']
+  TCP_PORT = mycontext['TCPPORT']
+  notFoundRunningSocket = True
+  while notFoundRunningSocket:
+    try:
+      print str(allHosts[neighboorLookup]) + " " + str(TCP_PORT)
+      tempsocket = openconn(allHosts[neighboorLookup], TCP_PORT)
+      tempsocket.send("ELECTION ipnumber=" + str(mycontext['leader']) + "electionnumber=" + str(mycontext['electionNumber']))
+      tempsocket.close()
+      notFoundRunningSocket = False
+    except Exception, e:
+      neighboorLookup = (neighboorLookup + 1) % len(allHosts)
+      print str(e)
+  mycontext['neighboorLookup'] = neighboorLookup
+  
+## A function that sends a message (SERVERPOST) to all other nodes. This function will only be used by the actual leader
+def sendMessage(message):
+  leader = mycontext['leader']
+  allHosts = mycontext['allHosts']
+  TCP_PORT = mycontext['TCPPORT']
+  for host in allHosts:
+    try:
+      if(host != getmyip()):
+        tempsocket = openconn(host, TCP_PORT)
+        tempsocket.send("SERVERPOST comment=" + message)
+        tempsocket.close()
+    except Exception, e:
+      print str(e)
+
+def addToComments(message):
+  comments = mycontext.get("comment")
+  if(comments):
+    comments.append(str(message))
+  else:
+    comments = [message]
+  mycontext['comment'] = comments  
+
+def createPage():
+  # We split up the html page in two, so that we later on easily will be  
+  # able to input the submitted data on a specific position on the screen. 
+  htmlhead = """<!DOCTYPE html>
+              <html>
+              <head>
+              <meta content="text/html charset=utf-8" http-equiv="content-type">
+              <title>Blackboard GroupName</title>
+              </head>
+              <body>
+                <h2> Board Content</h2>"""
+  htmlfoot = """
+                <br>
+                <h3>Submit to board with leader """ + mycontext['leader'] + """ with election number """ + str(mycontext['electionNumber']) + """<h3>
+                <textarea rows="4" cols="50" name="comment" form="usrform"></textarea>
+                <form action="" id="usrform" method="post">
+                <input type="submit">
+                </form>
+              </body>
+              </html>"""
+  htmlresponse = htmlhead
+  
+  comments = mycontext.get("comment")
+  # Prints the comments on their own lines between "htmlhead" and "htmlfoot"
+  if(comments):
+    for comment in comments:
+      htmlresponse += comment + "<br>"
+      
+  return htmlresponse + htmlfoot
+  
+  
+if callfunc == 'initialize':
+  mycontext['postlock'] = getlock()
+  if len(callargs) > 1:
+    raise Exception("Too many call arguments")
+
+  # Running remotely (assuming that we pass input argument only remotely):
+  # whenever this vessel gets a connection on its IPaddress:Clearinghouseport it'll call function board
+  elif len(callargs) == 1:
+    port = int(callargs[0])
+    ip = getmyip()
+    # Generate the number used for leader election, at the moment generated randomly.
+    mycontext['electionNumber'] = randomfloat()
+    mycontext['leader'] = ip
+    # Find all the hosts in the network.
+    ipconfig_file = open("ipconfig.txt", 'r')
+    allHosts = []
+    i = 0
+    allHostsLength = 0
+    for row in ipconfig_file:
+      allHostsLength = allHostsLength + 1
+    ipconfig_file.close()
+    
+    ipconfig_file = open("ipconfig.txt", 'r')
+    for row in ipconfig_file:
+      row = row.split()
+      allHosts.append(row[0])
+      if(row[0] == ip):
+        mycontext['neighboorLookup'] = (i + 1) % allHostsLength
+      i = i + 1
+    mycontext['allHosts'] = allHosts
+    mycontext['TCPPORT'] = port 
+    mycontext['numberOfElec'] = 0
+    
+    print mycontext['electionNumber']
+  # Running locally:
+  # whenever we get a connection on 127.0.0.1:12345 we'll call board
+  else:
+    port = 12345
+    ip = '127.0.0.1'
+  listencommhandle = waitforconn(ip,port,board)
+  sleep(5)
+  startup()

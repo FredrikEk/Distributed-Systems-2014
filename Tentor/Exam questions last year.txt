@@ -1,0 +1,111 @@
+Distributed Exam: 2013-12-17
+
+1a) Define the term "Distributed System" in your own words. Be brief and precise. (1p)
+
+Answer: A distributed system is the opposite of the typical centralized system concisting of a server to which clients can connect, where users of the systems all use their own client. A distributed system is a network concisting of several computers (nodes), together forming the system and cooperating on a common task.
+
+b) When designing or developing a distributed system, its distributed nature presents a number of challenges, which we discussed in the course. List at least six such challenges. (2p)
+
+Answer: 
+• Networks are unreliable	
+• Latency is not zero	
+• Bandwidth is finite	
+• A network is not secure	
+• Topology does change
+• There are several administrators	
+• Transports cost	
+• The network is inhomogeneous
+
+c) Select three challenges you listed in 1b) and detail on them. For each, focus on the following two questions: Why do these make developing Distributed Systems challenging? What mechanisms did we study in the course to deal with them? (3p)
+Answer:
+
+d) The following statement is attributed to Thomas J. Watson, Chairman and CEO of international Business Machines (IBM), in 1943: "I think there is a world market for maybe five computers". Please state the key consequences for distributed systems if this sentence had been the correct vision. (2p)
+Answer: 
+
+e) Centralized Systems (e.g. Client Server Systems) vs Decentralized Systes (e.g. Peer-To-Peer Systems): We discussed the differences between the centralized architectures and the decentralized architectures. Describe each system briefly and discuss two advantages of each. (2p)
+Answer:
+
+Advantages Peer-to-peer
+	• Don't need large data centers, because the users of the system contributes    with the computational power
+	• No single authority
+Advantages Client-Server:
+	• Good control, can decide what to publish
+	• Easy to implement
+
+2a) Define the terms "Mutual Exclusion" and "Election" in your own words. Be brief and precise. (2p)
+
+Answer:
+Mutual Exclusion: Two processes cant be in the critical sector at the same time.
+Election: All nodes decide upon a leader/master node.
+
+b) Token Ring for Mutual Exclusion. (3p)
+Answer:
+	i. Please describe how the Token Ring algorithm works.
+	It makes use of a directed logical ring where a token is passed from one node to the next node in the circle. If a node wishes to access the critical section, it can only do so when it has the token. When a node is done or if it doesn’t need to enter the critical section, it sends the token on to the next node.
+
+	ii. List at least two limitations of its design.
+		• Not scalable
+		• Not efficient if no one wants to enter critical section at any time
+		• The token could be lost
+
+
+c) Any algorithm for mutual exclusion must fulfill two goals: safety and liveness. (2p)
+Answer: 
+	i. Please define these two goals, be brief and precise.
+		• Liveness - Something good will eventually happen, some node will eventually enter the critical sector.
+		• Safety - Avoid processes to crash because of mutual exclusion.
+
+	ii. Explain how the token Ring Algorithm achieves these.
+		• Safety: There is only one token and the nodes form a directed ring. A node can only enter the critical section when it has the token. 
+		• Liveness: Because of the ring structure, the token will eventually reach a node who wants to enter the critical section.
+
+d) We discussed the Ring Algorithm for Election. (3p)
+Answer:
+	i. Please describe how the Ring Algorithm works. For simplicity, assume that there is only one initiator for the election. Please also note what assumption the algorithm makes on the topology.
+
+	The topology is a directed logical ring. It works by having the initiator send a message around the ring where each node compares the message with its own to see if the message for instance has the highest number (in a random roll). The node with the highest number wins and its address is forwarded.	
+
+	ii. What is its message complexity? Assume that there are n nodes and one initiator
+	O(n)
+
+3a) Define the terms "naming" and "name resolution" in Distributed Systems in your own words. Be brief and precise. (2p)
+Answer: 
+	i. Naming - An identifier for a node or a resource.
+    ii. Name resolution - A key-value. Get the numerical value from the name (key).
+
+b) In the course we discussed two concepts for name resolution: Iterative and recursive name resolution. Briefly describe each concept and highlight their key differences. (3p)
+Answer:
+	• Iterative name resolution - Get address for next known, and do the work yourself.
+	• Recursive name resolution - The server gets the address for you and contacts the other servers.
+
+c) In the lecture we discussed the concept Chord. Chord is a a Distributed Hash Table (DHT). Answer the following questions about Chord: (2p)
+Answer:
+	i. What topology do the nodes form?
+	A logical directed ring.
+
+	ii. What operations does a DHT, e.g., Chord, provide?
+	succ(), pred() or put(), get()
+
+	iii. How is redundancy in Chord achieved?
+	By keeping a copy of neighbours
+	
+	iv. In Chord, how many hops does it take on average to lookup a data item? (Assume that the number of nodes in the Chord is "n").
+	(log n)/2
+
+d) Finger tables in Chord: Below you find a picture of a Chord ring (on the left) and the finger table of node 80 (on the right). Please complete its finger tabke, i.e., list to which nodes the figures point and explain your calculations.
+Note: In this example the namespace size is 0 to 127, i.e., finger table size is 7. (3p)
+Answer:
+It is calculated by 80 + n^i mod 7. i goes from 0 to 6 as shown in the table to the right.
+
+4a) In the course we discussed the concept of clock synchronization for physical clocks. Why is clock synchronization important in Distributed Systems that rely on physical clocks? (1p)
+Answer:
+	Because physical clocks drift apart and dont have the same tick rate.
+
+
+b) from Exam 2014-04-25: Please answer the following questions about logical clocks. (2p)
+Answer:
+	i. How do logical clocks differ from physical clocks?
+
+	ii. Note two types of logical clocks.
+
+	iii. When do logical clocks "tick", i.e., when are they incremented?

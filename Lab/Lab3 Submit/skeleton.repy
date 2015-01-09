@@ -1,0 +1,171 @@
+# Fredrik Ek, 901109-0959
+# Robert Stigsson, 910814-4719
+
+#############################################################
+############# Pros Algorithm: Fast, eventually consistent, decentralized,
+#############                 doesn't care if a vessel goes down.
+############# Cons Algorithm: Not consistent all the time. If many vessels are
+#############                 under heavy load, it can take a long time for the
+#############                 vessels to reach consistency.     
+##############################################################
+
+def board(ip, port, sockobj, thiscommhandle, listencommhandle):
+  msgheader = sockobj.recv(1024) # Receive message, 
+
+  # Here we handle the different "types" of requests which can occur in the application
+  # The first type is a basic GET-request which applies when someone loads the page
+  if msgheader.startswith( 'GET' ):
+    
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    stopcomm(thiscommhandle)   
+    
+  # The second type of requests that can occur is the POST-request which happens when someone
+  # submits text through the textbox.
+  
+  elif msgheader.startswith( 'POST' ):
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    print("Recieved POST: " + posted_comment + " at " + str(getruntime()))
+    
+    mycontext['postlock'].acquire()
+    postID = mycontext['postNumber']
+    mycontext['postNumber'] = mycontext['postNumber'] + 1
+    # Add to comments instantly in order to show it in the reply.
+    addToComments(postID, mycontext['IP'], posted_comment)
+    mycontext['postlock'].release()
+
+    htmlresponse = createPage()
+    
+    sockobj.send("HTTP/1.1 200 OK\r\nContent-type: text/html\r\n" + \
+    "Content-length: %i\r\n\r\n%s" % (len(htmlresponse), htmlresponse))
+    
+    stopcomm(thiscommhandle)
+    
+    sendMessage(postID, mycontext['IP'], posted_comment)
+      
+  # The third type of "request" or case is one that we made up specifically for these assignments
+  # We call it SERVERPOST and its job is to receieve messages from other vessels.
+  # The way it works is that it adds the incomming posted comment and if its post id is
+  # higher than the actual machine's post id it updates the actual machines post id.
+  
+  elif msgheader.startswith( 'SERVERPOST' ):
+    stopcomm(thiscommhandle)
+    httpheader = msgheader.split("comment=")
+    posted_comment = httpheader[1]
+    print("Recieved SERVERPOST: " + posted_comment + " at " + str(getruntime()))
+    httpheader2 = httpheader[0].split("ip=")
+    posted_ip = httpheader2[1]
+    httpheader3 = httpheader2[0].split("number=")
+    posted_number = httpheader3[1]
+    externalAddToComments(posted_number, posted_ip, posted_comment)
+    
+  # This case should not occur
+  
+  else:
+    print "Will never end up here"
+    
+# A function that is used to send messages (SERVERPOSTs) to all other vessels. 
+def sendMessage(number, ip, message):
+  allHosts = mycontext['allHosts']
+  TCP_PORT = mycontext['TCPPORT']
+  for host in allHosts:
+    try:
+      tempsocket = openconn(host, TCP_PORT)
+      tempsocket.send("SERVERPOST number=" + str(number) + "ip=" + ip + "comment=" + message)
+      tempsocket.close()
+    except Exception, e:
+      print str(e)
+     
+# A function that sorts the posted comments, firstly on post id and secondly on ip number.
+def compareComparator(a, b):
+  if(int(a[0]) != int(b[0])):
+    return int(a[0]) - int(b[0])
+  else:
+    if (a[1] > b[1]):
+      return 1
+    else:
+      return -1
+      
+# Adds a new comment to the actual vessels posted comments.      
+def addToComments(number, ip, message):
+  comments = mycontext.get("comment")
+  if(comments):
+    comments.append((number, str(ip), str(message)))
+  else:
+    comments = [(number, str(ip), str(message))]
+  mycontext['comment'] = comments     
+
+# Adds a new comment to the actual vessels posted comments after having received
+# a SERVERPOST. If post id is equal to or larger than this vessels post id, it updates
+# this vessels post id.
+def externalAddToComments(number, ip, message):
+  mycontext['postlock'].acquire()
+  if(number >= mycontext['postNumber']):
+    mycontext['postNumber'] = int(number)+1
+    addToComments(number, ip, message)
+  else:
+    addToComments(number, ip, message)
+  mycontext['postlock'].release()  
+
+  
+def createPage():
+  # We split up the html page in two, so that we later on easily will be  
+  # able to input the submitted data on a specific position on the screen. 
+  htmlhead = """<!DOCTYPE html>
+              <html>
+              <head>
+              <meta content="text/html charset=utf-8" http-equiv="content-type">
+              <title>Blackboard GroupName</title>
+              </head>
+              <body>
+                <h2> Board Content</h2>"""
+  htmlfoot = """
+                <br>
+                <textarea rows="4" cols="50" name="comment" form="usrform"></textarea>
+                <form action="" id="usrform" method="post">
+                <input type="submit">
+                </form>
+              </body>
+              </html>"""
+  htmlresponse = htmlhead
+  comments = mycontext.get("comment")
+  # Prints the comments on their own lines between "htmlhead" and "htmlfoot"
+  if(comments):
+    comments.sort(cmp=compareComparator)
+    for comment in comments:
+      htmlresponse += str(comment[0]) + " - " + comment[1] + ": " + comment[2] + "<br>"
+      
+  return htmlresponse + htmlfoot    
+    
+	
+if callfunc == 'initialize':
+  mycontext['postlock'] = getlock()
+  if len(callargs) > 1:
+    raise Exception("Too many call arguments")
+
+  # Running remotely (assuming that we pass input argument only remotely):
+  # whenever this vessel gets a connection on its IPaddress:Clearinghouseport it'll call function board
+  elif len(callargs) == 1:
+    port = int(callargs[0])
+    ip = getmyip()
+    mycontext['TCPPORT'] = port
+    mycontext['IP'] = ip
+    
+    ipconfig_file = open("ipconfig.txt", 'r')
+    allHosts = []
+    for row in ipconfig_file:
+      row = row.split()
+      if(row[0] != ip):
+        allHosts.append(row[0])
+    
+    mycontext['postNumber'] = 0
+    mycontext['allHosts'] = allHosts
+  # Running locally:
+  # whenever we get a connection on 127.0.0.1:12345 we'll call board
+  else:
+    port = 12345
+    ip = '127.0.0.1'
+  listencommhandle = waitforconn(ip,port,board)

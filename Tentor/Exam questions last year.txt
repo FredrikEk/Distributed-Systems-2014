@@ -125,7 +125,7 @@ Answer:
 	iv. When a node sends a message to another node, what does it do with its logical clock?
 		TODO
 
-c) In the course, we discussed the concept of Vector Clocks. Please answer the following questions about Vector Clocks.
+c) In the course, we discussed the concept of Vector Clocks. Please answer the following questions about Vector Clocks.(3p)
 Answer:
 	i. How many clocks does each node maintain?
 		One. One per node.
@@ -135,3 +135,90 @@ Answer:
 
 	iii. Below you find a figure of a vector clock for three nodes. All vector clocks are initialized to zero. Please list the vector clocks for each event.
 		TODO
+
+d) In the course we discussed how Vector Clocks help to distinquish causally related events and concurrent events.(4p)
+Answer:
+	i. Please explain how this can be achieved
+		At each stage you can sort what certain processes know about other processes. What they know is causally related.
+
+	ii. Below you see pairs of Vector clocks. Note for each pair whether they denote concurrent or causally related events. Briefly explain your reasoning.
+		Are these two events causally related or concurrent?
+		Event on Node1 | Event on Node 2
+		VC[1] = 1 		 VC[1] = 1
+		VC[2] = 0		 VC[2] = 6
+			Causally related
+		
+		Are these two events causally related or concurrent?
+		Event on Node1 | Event on Node 2
+		VC[1] = 1 		 VC[1] = 0
+		VC[2] = 0 		 VC[2] = 6
+			Concurrently related
+	
+
+5 and 6 are missing from Exam: 2013-12-17 but 1-4 are the same for 2013-12-17 and 2014-04-25, except 4b.
+Here follows 5 and 6 from 2014-04-25:
+
+5a) Define the term replication. Be precise and brief. (1p)
+Answer:
+Replication is copying of data/programs onto different nodes, hdd etc.
+
+
+b) List at least three benefits that replication provides. Explain these benefits briefly. (1p)
+Answer:
+	• Performance - Copies closer to user.
+	• Availability - If one node crashes others can take its place.
+	• Security - Can work even with malicious copies.
+
+c) We discussed the concepts of Total Ordering, Sequential Ordering, and Causal Ordering.(4p)
+Answer:	
+	i. Briefly explain each concept
+		• Total ordering - All processes excute instructions in the same order.
+		• Sequential Ordering - All processes excute instructions from one process in the same order.
+		• Causal Ordering - Instructions casually related executes in the same order.
+
+	ii. Below you see two figures. For each figure, please note wether it describes Total Ordering, Sequential Ordering, and/or Causal Ordering. Briefly describe your decisions.
+		First: Sequential and Causal Second: sequential 
+
+d) We discussed the concept of monotonic writes. (4p)
+Answer:
+	i. Briefly explain the concept.
+		Montonic writes - A write operation by a process on a data item x is completed before any successive write operation on x by the same process (i.e.a wrote operation on a copy of data item is performed only if that copy has been brought up to date by mean of any preceding write operation, even if taken place on another copy of x).
+
+	ii. Below you see three figures. For each figure, please note wether it describes monotonic writes. Briefly describe your decisions.
+		Figure1: Monotonic writes	 Figure2: No	 Figure 3: No (WS(x2;x1)  in wrong order)
+
+6a) Define the term "fault tolerance". Be brief and precise. (2p)
+Answer:
+
+You could say that fault tolerance is the property that enables a system to continue operating properly in the event of the failure of (or one or more faults within) some of its components.
+
+b) We discussed the "Byzantine Generals Problem". (4p)
+Answer:
+	i. In the "Byzantine Generals Problem" there are honest generals and dishonest generals (traitors). What is the goal of the honest generals? What is the goal of the traitors?
+		The goal of the honest generals is that all of them should make the same decisions. Whereas the goal of the traitors is to avoid that from happening (The exact opposite).
+
+	ii. In the lecture we introduced an algorithm with multiple phases to enable consensus among the generals. Explain the algorithm and its different phases.
+		1. Ask all others what they want to do
+		2. Tell everyone else what the others said to you
+ 		3. Mask out diffrent answers as faulty
+		4. Do the majority
+
+
+	iii. Under what conditions can the generals achieve consensus. How many honest generals are required, assuming that there are k dishonest ones?
+		2k+1 honest generals. A Majority.
+
+c) We discussed the "Two Phase Commit" Protocol. As the name states, it consists of two phases.
+Answer:
+	i. Please name and describe phase 1 briefly.
+		Phase1 - voting. Are other processes ready for the transactions, saves volatile.
+
+	ii. Please name and describe what happens during a failure in phase 1, e.g., a node not replying or a message getting lost.
+		If a node doesn’t respond the commiter, it sends an abort message to all nodes.
+
+	iii. Please name and describe phase 2 briefly.
+		Phase 2 - Decison phase. Ff all nodes answer that they are ready, The coordinator sends a GLOBAL_COMMIT, otherwise GLOBAL_ABORT. Nodes commit the update.
+
+	iv. Please describe what happens during a failure in phase 2, e.g., a node not replying or a message getting lost.
+		The nodes save an uncommited instruction that they could commit upon recovery.
+
+

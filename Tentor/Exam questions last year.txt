@@ -114,16 +114,6 @@ Answer:
 	ii. How do the goals of this algorithm differ from other algorithms for clock synchronization such as Christian's Algorithm or the SNTP Algorithm?
 		The Berkley Algorithm says there is no correct time and therefore uses an average time in the group it is in. Christian's Algorithm tries to mask network latency when using time synchronization and SNTP tries to set a correct UTP time.
 
-b) from Exam 2014-04-25: Please answer the following questions about logical clocks. (2p)
-Answer:
-	i. How do logical clocks differ from physical clocks?
-		TODO
-	ii. Note two types of logical clocks.
-		TODO
-	iii. When do logical clocks "tick", i.e., when are they incremented?
-		TODO
-	iv. When a node sends a message to another node, what does it do with its logical clock?
-		TODO
 
 c) In the course, we discussed the concept of Vector Clocks. Please answer the following questions about Vector Clocks.(3p)
 Answer:
@@ -157,6 +147,17 @@ Answer:
 
 5 and 6 are missing from Exam: 2013-12-17 but 1-4 are the same for 2013-12-17 and 2014-04-25, except 4b.
 Here follows 5 and 6 from 2014-04-25:
+
+4 b) Please answer the following questions about logical clocks. (2p)
+Answer:
+	i. How do logical clocks differ from physical clocks?
+		TODO
+	ii. Note two types of logical clocks.
+		TODO
+	iii. When do logical clocks "tick", i.e., when are they incremented?
+		TODO
+	iv. When a node sends a message to another node, what does it do with its logical clock?
+		TODO
 
 5a) Define the term replication. Be precise and brief. (1p)
 Answer:
@@ -207,7 +208,7 @@ Answer:
 	iii. Under what conditions can the generals achieve consensus. How many honest generals are required, assuming that there are k dishonest ones?
 		2k+1 honest generals. A Majority.
 
-c) We discussed the "Two Phase Commit" Protocol. As the name states, it consists of two phases.
+c) We discussed the "Two Phase Commit" Protocol. As the name states, it consists of two phases. (4p)
 Answer:
 	i. Please name and describe phase 1 briefly.
 		Phase1 - voting. Are other processes ready for the transactions, saves volatile.
@@ -221,4 +222,30 @@ Answer:
 	iv. Please describe what happens during a failure in phase 2, e.g., a node not replying or a message getting lost.
 		The nodes save an uncommited instruction that they could commit upon recovery.
 
+Here follows answers to the Exam: 2014-08-20. Question 1,2 and 5 are exactly the same as previous two. Among the others some questions differ a bit, which will be brought up here:
 
+3c) In the course we discussed the concept of clock synchronization for physical clocks. (3p)
+Answer:
+	i. Why is clock synchronization important in Distributed Systems that rely on physical clocks?
+		TODO
+	ii. One algorithm for clock synchronization is called Cristians Algorithm. It operates in two steps. Please describe these. Please also note the assumptions this algorithm makes and note the equation the client uses to set its new time.
+		TODO
+
+4c) In the lectures we discussed the concepts of "Consistency" and "Eventually Consistency". (1p)
+Answer:
+	i. Please define the term Consistency and explain it briefly.
+		TODO
+	ii. Please define the term "Eventual Consistency" and explain it briefly.
+		TODO
+
+6a) Explain the basic concept of BitTorrent. Explain the terms "Seed(er)", "Leech(er)", "Tracker" and "Swarm" (3p)
+Answer:
+TODO
+
+b) Modern BitTorrent can work without trackers. This mode is called "Trackerless" BitTorrent. Explain this mode of operation and list its benefits. (3p)
+Answer:
+TODO
+
+c) Explain the concept of Tit-for-Tat that BitTorrent uses to aoid "free-riding", i.e, how it ensures that nodes that download also upload? What roles play "choking", "un-choking", and "optimistic un-choking" in this context?
+Answer:
+TODO

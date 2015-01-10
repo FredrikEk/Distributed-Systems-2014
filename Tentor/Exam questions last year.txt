@@ -2,7 +2,7 @@ Distributed Exam: 2013-12-17
 
 1a) Define the term "Distributed System" in your own words. Be brief and precise. (1p)
 
-Answer: A distributed system is the opposite of the typical centralized system concisting of a server to which clients can connect, where users of the systems all use their own client. A distributed system is a network concisting of several computers (nodes), often the users of the systems, together forming the system and cooperating on a common task.
+Answer: A distributed system is the opposite of the typical centralized system concisting of a server to which clients can connect, where users of the systems all use their own client. A distributed system is a network concisting of several computers (nodes), often the users of the system, together forming the system and cooperating on a common task.
 
 b) When designing or developing a distributed system, its distributed nature presents a number of challenges, which we discussed in the course. List at least six such challenges. (2p)
 
@@ -18,6 +18,12 @@ Answer:
 
 c) Select three challenges you listed in 1b) and detail on them. For each, focus on the following two questions: Why do these make developing Distributed Systems challenging? What mechanisms did we study in the course to deal with them? (3p)
 Answer:
+Architectures & Processes	
+• Mutual exclusion & Election	
+• Naming
+• Clocks and Time	
+• Consistency &	replication	
+• Fault	tolerance
 TODO
 
 d) The following statement is attributed to Thomas J. Watson, Chairman and CEO of international Business Machines (IBM), in 1943: "I think there is a world market for maybe five computers". Please state the key consequences for distributed systems if this sentence had been the correct vision. (2p)
@@ -256,15 +262,16 @@ Answer:
 
 6a) Explain the basic concept of BitTorrent. Explain the terms "Seed(er)", "Leech(er)", "Tracker" and "Swarm" (3p)
 Answer:
-	Seeder: (peer with the entire file)
+	Seeder: (peer with the entire file or parts of it)
 		A seed refers to a machine possessing some part of the data. A peer or downloader becomes a seed when it starts uploading the already downloaded content for other peers to download from. 
 	Leecher: (peer that's downloading the file)
 		Leech has two meanings. Often, leecher is synonymous with downloader: simply describing a peer or any client that does not have 100% of the data.
 		The term leech also refers to a peer (or peers) that has a negative effect on the swarm by having a very poor share ratio, downloading much more than they upload.
-	Tracker:
-		A tracker is a server that keeps track of which seeds and peers are in the swarm. Clients report information to the tracker periodically and in exchange, receive information about other clients to which they can connect. The tracker is not directly involved in the data transfer and does not have a copy of the file.
 	Swarm:
 		Together, all peers (including seeds) sharing a torrent are called a swarm. For example, six ordinary peers and two seeds make a swarm of eight.
+	Tracker:
+		A tracker is a server that keeps track of which seeds and peers are in the swarm. Clients report information to the tracker periodically and in exchange, receive information about other clients to which they can connect. The tracker is not directly involved in the data transfer and does not have a copy of the file.
+	
 
 b) Modern BitTorrent can work without trackers. This mode is called "Trackerless" BitTorrent. Explain this mode of operation and list its benefits. (3p)
 Answer:

@@ -165,7 +165,7 @@ Answer:
 		Upon receiving a message (?Note sure?) TODO
 
 	iv. When a node sends a message to another node, what does it do with its logical clock?
-		updates it if it is higher (?Not sure?) TODO
+		Updates it if it is off (?Not sure?) TODO
 
 5a) Define the term replication. Be precise and brief. (1p)
 Answer:

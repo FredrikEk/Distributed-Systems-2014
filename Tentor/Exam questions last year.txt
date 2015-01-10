@@ -2,7 +2,7 @@ Distributed Exam: 2013-12-17
 
 1a) Define the term "Distributed System" in your own words. Be brief and precise. (1p)
 
-Answer: A distributed system is the opposite of the typical centralized system concisting of a server to which clients can connect, where users of the systems all use their own client. A distributed system is a network concisting of several computers (nodes), together forming the system and cooperating on a common task.
+Answer: A distributed system is the opposite of the typical centralized system concisting of a server to which clients can connect, where users of the systems all use their own client. A distributed system is a network concisting of several computers (nodes), often the users of the systems, together forming the system and cooperating on a common task.
 
 b) When designing or developing a distributed system, its distributed nature presents a number of challenges, which we discussed in the course. List at least six such challenges. (2p)
 
@@ -54,7 +54,7 @@ c) Any algorithm for mutual exclusion must fulfill two goals: safety and livenes
 Answer: 
 	i. Please define these two goals, be brief and precise.
 		• Liveness - "Something good will eventually happen", some node will eventually enter the critical sector.
-		• Safety - "something bad will never happen", Avoid processes crashing because of mutual exclusion.
+		• Safety - "Something bad will never happen", Avoid processes crashing because of mutual exclusion.
 
 	ii. Explain how the token Ring Algorithm achieves these.
 		• Safety: There is only one token and the nodes form a directed ring. A node can only enter the critical section when it has the token. 
@@ -71,7 +71,7 @@ Answer:
 
 3a) Define the terms "naming" and "name resolution" in Distributed Systems in your own words. Be brief and precise. (2p)
 Answer: 
-	i. Naming - An identifier/address for a node or a resource. - "A name in a distributed system is a string of bits or characters that is refer to an entity"
+	i. Naming - An identifier/address for a node or a resource. - "A name in a distributed system is a string of bits or characters that is refering to an entity /Wikipedia"
     
     ii. Name resolution - The process of looking up a name. Uses a key-value to get the numerical value from the name (key).
 
@@ -162,10 +162,10 @@ Answer:
 		• Matrix clocks, an extension of vector clocks that also contains information about other processes' views of the system.
 
 	iii. When do logical clocks "tick", i.e., when are they incremented?
-		After an event (?Note sure?) TODO
+		Upon receiving a message (?Note sure?) TODO
 
 	iv. When a node sends a message to another node, what does it do with its logical clock?
-		Increments it its local clock (?Not sure?) TODO
+		updates it if it is higher (?Not sure?) TODO
 
 5a) Define the term replication. Be precise and brief. (1p)
 Answer:
@@ -235,6 +235,8 @@ Here follows answers to the Exam: 2014-08-20. Question 1,2 and 5 are exactly the
 3c) In the course we discussed the concept of clock synchronization for physical clocks. (3p)
 Answer:
 	i. Why is clock synchronization important in Distributed Systems that rely on physical clocks?
+		Because physical clocks drift apart and dont have the same tick rate.
+		
 		Gettinng two systems to	agree on time	
 			– Two clocks hardly	ever agree	
 			– Quartz oscillators oscillate at slightly different frequencies

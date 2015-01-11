@@ -16,7 +16,6 @@ Answer:
 • Transports cost	
 • The network is inhomogeneous
 
-
 c) Select three challenges you listed in 1b) and detail on them. For each, focus on the following two questions: Why do these make developing Distributed Systems challenging? What mechanisms did we study in the course to deal with them? (3p)
 Answer:
 Architectures & Processes	
@@ -54,7 +53,7 @@ Answer:
 
 	ii. List at least two limitations of its design.
 		• Not scalable
-		• Not efficient if no one wants to enter critical section at any time
+		• Not efficient because if a node wants to enter critical section it has to wait untill it gets the token which might take a long time
 		• The token could be lost
 
 

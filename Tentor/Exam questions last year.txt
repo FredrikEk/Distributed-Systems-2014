@@ -119,7 +119,7 @@ Answer:
 		3. Instead of sending the updated current time back to the other process, the master then sends out the amount (positive or negative) that each slave node must adjust its clock. 
 
 	ii. How do the goals of this algorithm differ from other algorithms for clock synchronization such as Christian's Algorithm or the SNTP Algorithm?
-		The Berkley Algorithm says there is no correct time and therefore uses an average time in the group it is in. Christian's Algorithm tries to mask network latency when using time synchronization and SNTP tries to set a correct UTP time.
+		The Berkley Algorithm says there is no correct time and therefore uses an average time in the group it is in. Christian's Algorithm tries to mask network latency when using time synchronization and SNTP tries to set a correct UTC time from different time servers.
 
 
 c) In the course, we discussed the concept of Vector Clocks. Please answer the following questions about Vector Clocks.(3p)
@@ -176,7 +176,7 @@ Answer:
 
 5a) Define the term replication. Be precise and brief. (1p)
 Answer:
-Replication is copying of data/programs onto different nodes, hdd etc.
+Replication means copying of data/programs onto different nodes, hdd etc.
 
 
 b) List at least three benefits that replication provides. Explain these benefits briefly. (1p)
